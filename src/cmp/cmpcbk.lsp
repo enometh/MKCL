@@ -14,15 +14,24 @@
 
 (in-package "COMPILER")
 
+;; ;m 200607 - extend the form which NAME can take: if name is a list
+;; of three elements then a non-NIL third element indicates that the
+;; callback should be exported.  In this case the c-name of the
+;; callback is derived from NAME via LISP-TO-NAME.  Arrange to export
+;; this c-name with extern linkage via t3-defcallback.
+
 (defun c1-defcallback (args)
   (destructuring-bind (name return-type arg-list &rest body)
       args
-    (let ((arg-types '())
-	  (arg-type-constants '())
-	  (arg-variables '())
-	  (c-name (format nil "mkcl_callback_~d" (length *callbacks*)))
-	  (name (if (consp name) (first name) name))
-	  (call-type (if (consp name) (second name) :cdecl)))
+    (let* ((export-callback-p (and (consp name) (third name)))
+           (arg-types '())
+           (arg-type-constants '())
+           (arg-variables '())
+           (c-name (if export-callback-p
+                       (lisp-to-c-name (first name))
+                       (format nil "mkcl_callback_~d" (length *callbacks*))))
+           (name (if (consp name) (first name) name))
+           (call-type (if (consp name) (second name) :cdecl)))
       (dolist (i arg-list)
 	(unless (consp i)
 	  (cmperr "Syntax error in CALLBACK form: C type is missing in argument ~A "i))
@@ -34,7 +43,7 @@
 		    (add-object type))
 		arg-type-constants)))
       (push (list name c-name (add-object name)
-		  return-type (reverse arg-types) (reverse arg-type-constants) call-type)
+		  return-type (reverse arg-types) (reverse arg-type-constants) call-type export-callback-p)
 	    *callbacks*)
       (c1expr
        `(progn
@@ -77,7 +86,9 @@
     (cdr x)))
 
 (defun t3-defcallback (lisp-name c-name c-name-constant return-type
-		       arg-types arg-type-constants call-type &aux (return-p t))
+		       arg-types arg-type-constants call-type
+		       export-callback-p
+		       &aux (return-p t))
   (cond ((ffi::foreign-elt-type-p return-type))
 	((member return-type '(nil :void))
 	 (setf return-p nil))
@@ -91,8 +102,14 @@
 		(:cdecl "")
 		(:stdcall "__stdcall ")
 		(t (cmperr "DEFCALLBACK does not support ~A as calling convention" call-type)))))
-    (wt-nl1 "static " return-type-name " " fmod c-name "(")
-    (wt-nl-h "static " return-type-name " " fmod c-name "(")
+    (wt-nl-h (if export-callback-p
+                 "extern "
+                 "static ")
+             return-type-name " " fmod c-name "(")
+    (wt-nl1  (if export-callback-p
+                 "__attribute__((visibility(\"default\"))) "
+                 "static ")
+             return-type-name " " fmod c-name "(")
     (if arg-types
 	(loop for n from 0
 	      and type in arg-types

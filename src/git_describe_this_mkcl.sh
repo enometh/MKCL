@@ -8,6 +8,10 @@
 
 #set -x # debug
 
+printf "(defun mkcl::git-describe-this-mkcl () \"1.1.11.90\")\n"
+exit 0
+
+
 git_available_p() {
     # Check that (1) we have git (2) this is a git tree.
     if ( command -v git >/dev/null && git describe >/dev/null 2>/dev/null )

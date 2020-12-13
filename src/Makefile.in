@@ -122,7 +122,7 @@ CONTRIB_STATIC_LIBS = ext/asdf.a ext/asdf3.a ext/asdf2.a $(CONTRIB_FASLS:%.fasb=
 MKCL_STATIC_PARTS = mkcltop.@LIBEXT@ lsp.a mkclmin.@LIBEXT@
 
 
-all: base contribs
+all: base extension-contribs
 
 base: mkcc$(EXE) mkcl-config $(TARGETS) help.doc
 
@@ -446,7 +446,8 @@ BUILD-STAMP: config.status
 	echo "#" `uname -a` > $@
 	head -8 config.log | tail -6 >> $@
 
-install: install-base install-extension-contribs install-asdf-contribs install-slime
+install: install-base install-extension-contribs
+# install-asdf-contribs install-slime
 #	cd doc; $(MAKE) prefix=$(prefix) install
 
 install-base: base libmkcc1.a

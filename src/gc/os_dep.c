@@ -623,6 +623,12 @@ MK_GC_INNER char * MK_GC_get_maps(void)
   }
 #endif /* OPENBSD */
 
+
+#if defined(LINUX)
+JMP_BUF MK_GC_jmp_buf;
+#endif
+
+
 # ifdef OS2
 
 # include <stddef.h>

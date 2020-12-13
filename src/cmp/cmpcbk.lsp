@@ -17,8 +17,8 @@
 ;; ;m 200607 - extend the form which NAME can take: if name is a list
 ;; of three elements then a non-NIL third element indicates that the
 ;; callback should be exported.  In this case the c-name of the
-;; callback is derived from NAME via LISP-TO-NAME.  Arrange to export
-;; this c-name with extern linkage via t3-defcallback.
+;; callback is derived from NAME via LISP-TO-C-FUNCTION-NAME Arrange
+;; to export this c-name with extern linkage via t3-defcallback.
 
 (defun c1-defcallback (args)
   (destructuring-bind (name return-type arg-list &rest body)

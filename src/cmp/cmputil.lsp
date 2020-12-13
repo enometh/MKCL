@@ -312,6 +312,18 @@
     (t (si:mangle-string (prin1-to-string obj)))) ;; the (setf foo) case.
   )
 
+(defun lisp-to-c-name (obj)
+  "Translate Lisp function name object prin1 representation to valid C
+identifier name. Does no mangling"
+  (and obj
+       (map 'string
+            #'(lambda (c)
+                (let ((cc (char-code c)))
+                  (if (or (<= #.(char-code #\a) cc #.(char-code #\z))
+                          (<= #.(char-code #\0) cc #.(char-code #\9)))
+                      c #\_)))
+            (string-downcase (prin1-to-string obj)))))
+
 (defun proper-list-p (x &optional test)
   #+(or)
   (and (listp x)

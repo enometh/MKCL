@@ -66,8 +66,8 @@ by (documentation 'NAME 'type)."
          (do-deftype ',name '(DEFTYPE ,name ,lambda-list ,@body)
                      #'(si::LAMBDA (,whole-var ,env-var)
                          (declare (ignorable ,env-var))
-                         (destructuring-bind ,lambda-list (if (consp ,whole-var) (cdr ,whole-var) nil)
-                           (block ,name
+			 (block ,name
+			   (destructuring-bind ,lambda-list (if (consp ,whole-var) (cdr ,whole-var) nil)
                              ,@body))))))))
 
 

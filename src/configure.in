@@ -662,6 +662,11 @@ else
   LDRPATH='~*'
 fi
 
+#;madhu 210428
+if (echo "$LDRPATH" | grep '~A') > /dev/null; then
+      LDRPATH="`echo LDRPATH | sed "s,~A,\${libdir},"`"
+fi
+
 if test "${with_cmuformat}" = "yes"; then
   with_clos_streams="yes"
   AC_DEFINE(MKCL_CMU_FORMAT, [1], [Use CMU Common-Lisp's FORMAT routine])

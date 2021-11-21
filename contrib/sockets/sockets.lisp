@@ -1764,7 +1764,46 @@ GET-NAME-SERVICE-ERRNO")
 #-(or :unix :linux :windows :cygwin)
 (define-sockopt sockopt-reuse-port "SO_REUSEPORT" bool)
 
-(define-sockopt sockopt-tcp-nodelay "TCP_NODELAY" bool)
+;; ;madhu 211120
+;; (define-sockopt sockopt-tcp-nodelay "TCP_NODELAY" bool) level is not SOL_SOCKET but IPPROTO_TCP
+
+(defun get-sockopt-bool-ipproto-tcp (fd const)
+  (let ((ret (c-inline (fd const) (:int :int) t
+"{
+        int sockopt, ret;
+        socklen_t socklen = sizeof(sockopt);
+
+        MKCL_LIBC_NO_INTR(env, (ret = getsockopt(#0,IPPROTO_TCP,#1, (void *) &sockopt,&socklen)));
+
+        @(return) = (ret == 0) ? mkcl_make_integer(env, sockopt) : mk_cl_Cnil;
+}")))
+    (if ret
+	(/= ret 0)
+	(error "Sockopt error: ~A" (si:errno-string)))))
+
+(defun set-sockopt-bool-ipproto-tcp (fd const value)
+  (let ((ret (c-inline (fd const value) (:int :int :object) t
+"{
+        int sockopt = (#2 == mk_cl_Cnil) ? 0 : 1;
+        int ret;
+
+	MKCL_LIBC_NO_INTR(env, (ret = setsockopt(#0,IPPROTO_TCP,#1, (void *) &sockopt,sizeof(sockopt))));
+
+        @(return) = (ret == 0) ? mk_cl_Ct : mk_cl_Cnil;
+}")))
+    (if ret
+	value
+	(error "Sockopt error: ~A" (si:errno-string)))))
+
+(progn
+ (export 'sockopt-tcp-nodelay)
+ (defun sockopt-tcp-nodelay (socket)
+   (get-sockopt-bool-ipproto-tcp (socket-file-descriptor socket)
+                     (c-constant "TCP_NODELAY")))
+ (defun (setf sockopt-tcp-nodelay) (value socket)
+   (set-sockopt-bool-ipproto-tcp (socket-file-descriptor socket)
+                     (c-constant "TCP_NODELAY")
+                     value)))
 
 ;; Add sockopts here as you need them...
 
